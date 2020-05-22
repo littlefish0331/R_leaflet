@@ -26,7 +26,8 @@ leaflet.extra，也有很詳盡的demo範例，放在github上面
 
 ## 相關文章
 
-有不錯的教學文章，會放在 reference/。
+有不錯的教學文章，會放在 reference/。  
+有些可能會在 heatmap_learn 專案底下，但是可以的話會盡量移植過來。
 
 ## 函式參數說明
 
