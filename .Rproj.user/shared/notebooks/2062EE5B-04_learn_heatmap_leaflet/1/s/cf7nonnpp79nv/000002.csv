@@ -1,0 +1,3 @@
+"0","# 參數palette: 可有四種來源名稱填入，"
+"0","# 然後這個函數的使用蠻奇特的，學一下~"
+"0","RColorBrewer::brewer.pal.info"

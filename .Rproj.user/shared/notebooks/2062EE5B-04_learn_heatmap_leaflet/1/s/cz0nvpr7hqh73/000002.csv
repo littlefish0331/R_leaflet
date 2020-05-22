@@ -1,0 +1,3 @@
+"0","# F1，可以從連結去看更多的底圖選項。或是在$後面按下tab鍵。"
+"0","# 注意有些圖層的縮放有限，放太大會顯示 map data not available"
+"0","m %>% addProviderTiles(provider = providers$Stamen.Toner)"

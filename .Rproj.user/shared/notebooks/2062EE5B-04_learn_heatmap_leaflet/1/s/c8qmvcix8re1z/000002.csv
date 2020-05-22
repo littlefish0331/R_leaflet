@@ -1,0 +1,4 @@
+"0","m %>% addProviderTiles(providers$MtbMap) %>%"
+"0","  addProviderTiles(providers$Stamen.TonerLines,"
+"0","                   options = providerTileOptions(opacity = 0.3)) %>%"
+"0","  addProviderTiles(providers$Stamen.TonerLabels)"

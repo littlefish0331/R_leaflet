@@ -1,0 +1,8 @@
+"0","data(quakes)"
+"0",""
+"0","# Show first 20 rows from the `quakes` dataset"
+"0","leaflet(data = quakes[1:20,]) %>% addTiles() %>%"
+"0","  addMarkers(lng = ~long, lat = ~lat, "
+"0","             # icon = icons(""./72px.png"", iconWidth = 30), #icon可以使用自訂的，可為url"
+"0","             popup = ~as.character(mag), #控制點擊後的訊息視窗。"
+"0","             label = ~as.character(mag)) #控制滑鼠移動過去顯示的文字。"

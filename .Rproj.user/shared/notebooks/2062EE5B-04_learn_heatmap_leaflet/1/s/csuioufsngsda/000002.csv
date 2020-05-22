@@ -1,0 +1,6 @@
+"0","leaflet() %>% addTiles() %>%"
+"0","  addRectangles("
+"0","    lng1=-118.456554, lat1=34.078039,"
+"0","    lng2=-118.436383, lat2=34.062717,"
+"0","    fillColor = ""transparent"" #設置成透明的小技巧。"
+"0","  )"

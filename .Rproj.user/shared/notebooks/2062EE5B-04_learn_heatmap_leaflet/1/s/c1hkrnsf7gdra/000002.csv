@@ -1,0 +1,3 @@
+"0","# add some circles to a map"
+"0","df = data.frame(Lat = 1:10, Long = rnorm(10))"
+"0","leaflet(data = df) %>% addCircles()"

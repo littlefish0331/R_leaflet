@@ -1,0 +1,3 @@
+"0","m %>% addCircleMarkers(lng = ~lng, lat = ~lat, "
+"0","                       radius = runif(n = 100, min = 4, max = 10), "
+"0","                       color = c('red'))"

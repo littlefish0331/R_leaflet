@@ -1,0 +1,6 @@
+"0","# help(package='maps'): 可以看有那些資料庫可以使用。沒有台灣"
+"0","library(maps)"
+"0","# mapStates = map(database = ""state"", fill = TRUE, plot = TRUE)"
+"0","mapStates = map(database = ""state"", fill = TRUE, plot = FALSE)"
+"0","leaflet(data = mapStates) %>% addTiles() %>%"
+"0","  addPolygons(fillColor = topo.colors(10, alpha = NULL), stroke = FALSE)"

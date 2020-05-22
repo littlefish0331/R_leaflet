@@ -1,0 +1,3 @@
+"0","neStates <- subset(states, states$STUSPS %in% c("
+"0","  ""CT"",""ME"",""MA"",""NH"",""RI"",""VT"",""NY"",""NJ"",""PA"""
+"0","))"

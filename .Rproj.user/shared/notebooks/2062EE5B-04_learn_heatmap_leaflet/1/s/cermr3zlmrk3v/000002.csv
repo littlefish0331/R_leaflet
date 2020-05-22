@@ -1,0 +1,3 @@
+"0","# Set value for the minZoom and maxZoom settings."
+"0","# 透過參數 minZoom = 0, maxZoom = 18，可以限制初始使用者的畫面，以及最大的縮放程度。"
+"0","leaflet(options = leafletOptions(minZoom = 4, maxZoom = 18)) %>% addTiles()"

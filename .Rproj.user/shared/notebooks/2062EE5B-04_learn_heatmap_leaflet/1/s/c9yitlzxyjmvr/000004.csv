@@ -1,0 +1,7 @@
+"0",""
+"0","# ---"
+"0","# tmaptools::geocode_OSM(""taipei 101"")"
+"0","m <- leaflet() %>%"
+"0","  addTiles() %>%"
+"0","  addMarkers(lng = 121.56481, lat = 25.03369, popup = ""Taipei 101"")"
+"0","m  # Print the map"

@@ -1,0 +1,7 @@
+"0","# 資料比較小，讀取比較快!!"
+"0","nycounties <- geojsonio::geojson_read(""../data/nycounties.geojson"", what = ""sp"")"
+"0","# nyc <- sf::read_sf(""../data/nycounties.geojson"") #也是OK"
+"0",""
+"0","leaflet(data = nycounties) %>%"
+"0","  addTiles() %>%"
+"0","  addPolygons()"

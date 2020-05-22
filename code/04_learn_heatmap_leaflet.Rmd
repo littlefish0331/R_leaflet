@@ -1,0 +1,1043 @@
+---
+title: "Untitled"
+author: "Steve, Yu"
+date: "2020/5/13"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+rm(list = ls()); gc()
+library(knitr)
+library(dplyr)
+library(data.table)
+
+opts_chunk$set(echo = TRUE)
+```
+
+# File Target
+
+- learn leaflet 
+
+---
+
+# leaflet tutorial
+
+[Leaflet for R - Introduction](https://rstudio.github.io/leaflet/)
+
+```{r}
+library(leaflet)
+```
+
+## Introduction
+
+```{r}
+leaflet() %>% addTiles()
+```
+
+```{r}
+m <- leaflet() %>%
+  addTiles() %>%  # Add default OpenStreetMap map tiles
+  addMarkers(lng=174.768, lat=-36.852, popup="The birthplace of R")
+m  # Print the map
+
+# ---
+# tmaptools::geocode_OSM("taipei 101")
+m <- leaflet() %>%
+  addTiles() %>%
+  addMarkers(lng = 121.56481, lat = 25.03369, popup = "Taipei 101")
+m  # Print the map
+```
+
+方便使用 %>% 進行操作。
+
+```{r}
+m <- leaflet()
+m <- addTiles(m)
+m <- addMarkers(m, lng=174.768, lat=-36.852, popup="The birthplace of R")
+m
+
+m <- leaflet()
+m <- addTiles(m)
+m <- addMarkers(m, lng = 121.56481, lat = 25.03369, popup = "Taipei 101")
+m
+```
+
+---
+
+## The Map Widget
+
+```{r}
+leafletOptions()
+```
+
+### Initializing Options
+
+```{r}
+# Set value for the minZoom and maxZoom settings.
+# 透過參數 minZoom = 0, maxZoom = 18，可以限制初始使用者的畫面，以及最大的縮放程度。
+leaflet(options = leafletOptions(minZoom = 4, maxZoom = 18)) %>% addTiles()
+```
+
+### Map Methods
+
+- setView(): sets the center of the map view and the zoom level
+- fitBounds(): fits the view into the rectangle [lng1, lat1] – [lng2, lat2]
+- clearBounds(): clears the bound, so that the view will be automatically determined by the range of latitude/longitude data in the map layers if provided
+
+- setView(): 設置地圖視圖的中心和縮放級別
+- fitBounds(): 使視圖適合矩形[lng1，lat1] – [lng2，lat2]
+- clearBounds(): 清除邊界，以便根據地圖圖層中的緯度/經度數據范圍自動確定視圖
+
+### The Data Object
+
+Both leaflet() and the map layer functions have an optional data parameter that is designed to receive spatial data in one of several forms:
+
+- From base R:
+  - lng/lat matrix
+  - data frame with lng/lat columns
+  
+- From the sp package:
+  - SpatialPoints[DataFrame]
+  - Line/Lines
+  - SpatialLines[DataFrame]
+  - Polygon/Polygons
+  - SpatialPolygons[DataFrame]
+  
+- From the maps package:
+  - the data frame from returned from map()
+
+參數 data 的詳細操作再去文件看。  
+總之，他很聰明會去偵測 lat lon 的欄位。
+
+以下寫法都是相同的。
+
+```{r}
+# add some circles to a map
+df = data.frame(Lat = 1:10, Long = rnorm(10))
+leaflet(data = df) %>% addCircles()
+
+# ---
+leaflet(df) %>% addCircles(lng = ~Long, lat = ~Lat)
+
+# ---
+leaflet() %>% addCircles(data = df)
+leaflet() %>% addCircles(data = df, lat = ~ Lat, lng = ~ Long)
+```
+
+```{r}
+library(sp)
+Sr1 = Polygon(cbind(c(2, 4, 4, 1, 2), c(2, 3, 5, 4, 2))) #四邊形，頭尾的點要相同。
+Sr2 = Polygon(cbind(c(5, 4, 2, 5), c(2, 3, 2, 2))) #三角形，頭尾的點要相同。
+Sr3 = Polygon(cbind(c(4, 4, 5, 10, 4), c(5, 3, 2, 5, 5)))
+Sr4 = Polygon(cbind(c(5, 6, 6, 5, 5), c(4, 4, 3, 3, 4)), hole = TRUE) #小正方形
+Srs1 = Polygons(list(Sr1), "s1")
+Srs2 = Polygons(list(Sr2), "s2")
+Srs3 = Polygons(list(Sr4, Sr3), "s3/4")
+SpP = SpatialPolygons(list(Srs1, Srs2, Srs3), 1:3)
+leaflet(height = "300px") %>% addPolygons(data = SpP)
+```
+
+```{r}
+# help(package='maps'): 可以看有那些資料庫可以使用。沒有台灣
+library(maps)
+# mapStates = map(database = "state", fill = TRUE, plot = TRUE)
+mapStates = map(database = "state", fill = TRUE, plot = FALSE)
+leaflet(data = mapStates) %>% addTiles() %>%
+  addPolygons(fillColor = topo.colors(10, alpha = NULL), stroke = FALSE)
+```
+
+```{r}
+df = data.frame(
+  lat = rnorm(100),
+  lng = rnorm(100),
+  size = runif(n = 100, min = 5, max = 20),
+  color = sample(x = colors(), size = 100, replace = T)
+)
+m = leaflet(data = df) %>% addTiles()
+m %>% addCircleMarkers(lng = ~lng, lat = ~lat, 
+                       radius = ~size,
+                       color = ~color, #線的顏色
+                       stroke = F, #線(邊框)是否要顯示
+                       # weight = 10, #線的粗細
+                       # opacity = 0.1, #線的透明度
+                       fillColor = ~color,
+                       fillOpacity = 1,
+                       fill = T)
+m %>% addCircleMarkers(lng = ~lng, lat = ~lat, 
+                       radius = runif(n = 100, min = 4, max = 10), 
+                       color = c('red'))
+```
+
+---
+
+## Using Basemaps
+
+Leaflet supports basemaps using map tiles, popularized by Google Maps and now used by nearly all interactive web maps.
+
+### Default (OpenStreetMap) Tiles
+
+The easiest way to add tiles is by calling addTiles() with no arguments; by default, OpenStreetMap tiles are used.
+
+```{r}
+m <- leaflet() %>% setView(lng = -71.0589, lat = 42.3601, zoom = 12)
+m %>% addTiles()
+
+# ---
+# tmaptools::geocode_OSM("taipei") #121.56368  25.03752 
+m <- leaflet() %>% setView(lng = 121.56368, lat = 25.03752, zoom = 12)
+m %>% addTiles()
+```
+
+### Third-Party Tiles
+
+As a convenience, leaflet also provides a named list of all the third-party tile providers that are supported by the plugin.  
+This enables you to use auto-completion feature of your favorite R IDE (like RStudio) and not have to remember or look up supported tile providers;  
+just type providers$ and choose from one of the options.  
+You can also use names(providers) to view all of the options.
+
+```{r}
+# F1，可以從連結去看更多的底圖選項。或是在$後面按下tab鍵。
+# 注意有些圖層的縮放有限，放太大會顯示 map data not available
+m %>% addProviderTiles(provider = providers$Stamen.Toner)
+m %>% addProviderTiles(provider = providers$CartoDB.Positron)
+m %>% addProviderTiles(provider = providers$Esri.NatGeoWorldMap)
+```
+
+Note that some tile set providers require you to register;  
+see the project page for more information.  
+You can pass access tokens/keys, and other options, to the tile provider by populating the options argument with the providerTileOptions() function.
+
+### Custom Tile URL Template
+
+If you happen to have a custom map tile URL template to use,  
+you can provide it as an argument to addTiles().
+
+### WMS Tiles
+
+You can use addWMSTiles() to add WMS (Web Map Service) tiles. 
+
+```{r}
+# transparent(透明)
+leaflet() %>% addTiles() %>% setView(-93.65, 42.0285, zoom = 4) %>%
+  addWMSTiles(
+    baseUrl = "http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi",
+    layers = "nexrad-n0r-900913",
+    options = WMSTileOptions(format = "image/png", transparent = TRUE),
+    attribution = "Weather data © 2012 IEM Nexrad"
+  )
+```
+
+### Combining Tile Layers
+
+You aren’t restricted to using a single basemap on a map;  
+you can stack them by adding multiple tile layers.  
+
+This generally only makes sense if the front tiles consist of semi transparent tiles,  
+or have an adjusted opacity via the options argument.
+
+```{r}
+m %>% addProviderTiles(providers$MtbMap) %>%
+  addProviderTiles(providers$Stamen.TonerLines,
+                   options = providerTileOptions(opacity = 0.3)) %>%
+  addProviderTiles(providers$Stamen.TonerLabels)
+```
+
+---
+
+## Markers
+
+Use markers to call out points on the map.  
+Marker locations are expressed in latitude/longitude coordinates, and can either appear as icons or as circles.
+
+### Data sources
+
+Point data for markers can come from a variety of sources: 請看文件。  
+Note that MULTIPOINT objects from sf are not supported at this time.
+
+### Icon Markers
+
+Icon markers are added using the addMarkers or the addAwesomeMarkers functions.  
+Their default appearance is a dropped pin. 
+
+As with most layer functions,  
+the popup argument can be used to add a message to be displayed on click,  
+and the label option can be used to display a text label either on hover or statically.
+
+```{r}
+data(quakes)
+
+# Show first 20 rows from the `quakes` dataset
+leaflet(data = quakes[1:20,]) %>% addTiles() %>%
+  addMarkers(lng = ~long, lat = ~lat, 
+             # icon = icons("./72px.png", iconWidth = 30), #icon可以使用自訂的，可為url
+             popup = ~as.character(mag), #控制點擊後的訊息視窗。
+             label = ~as.character(mag)) #控制滑鼠移動過去顯示的文字。
+```
+
+### Customizing Marker Icons
+
+You can provide custom markers in one of several ways, depending on the scenario.  
+For each of these ways, the icon can be provided as either a URL or as a file path.  
+For the simple case of applying a single icon to a set of markers, use makeIcon().
+
+```{r}
+greenLeafIcon <- makeIcon(
+  iconUrl = "http://leafletjs.com/examples/custom-icons/leaf-green.png",
+  iconWidth = 38, iconHeight = 95,
+  iconAnchorX = 22, iconAnchorY = 94,
+  shadowUrl = "http://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  shadowWidth = 50, shadowHeight = 64,
+  shadowAnchorX = 4, shadowAnchorY = 62
+)
+
+leaflet(data = quakes[1:4,]) %>% addTiles() %>%
+  addMarkers(lng = ~long, lat = ~lat, 
+             icon = greenLeafIcon)
+```
+
+If you have several icons to apply that vary only by a couple of parameters  
+(i.e. they share the same size and anchor points but have different URLs),  
+use the icons() function.   
+
+icons() performs similarly to data.frame(),  
+in that any arguments that are shorter than the number of markers will be recycled to fit.
+
+```{r}
+quakes1 <- quakes[1:10,]
+
+# icons()和makeIcon()，其實都可以。
+leafIcons <- icons(
+  iconUrl = ifelse(quakes1$mag < 4.6,
+    "http://leafletjs.com/examples/custom-icons/leaf-green.png",
+    "http://leafletjs.com/examples/custom-icons/leaf-red.png"
+  ),
+  iconWidth = 38, iconHeight = 95,
+  iconAnchorX = 22, iconAnchorY = 94,
+  shadowUrl = "http://leafletjs.com/examples/custom-icons/leaf-shadow.png",
+  shadowWidth = 50, shadowHeight = 64,
+  shadowAnchorX = 4, shadowAnchorY = 62
+)
+
+leaflet(data = quakes1) %>% addTiles() %>%
+  addMarkers(~long, ~lat, icon = leafIcons)
+```
+
+Finally, if you have a set of icons that vary in multiple parameters,  
+it may be more convenient to use the iconList() function.  
+
+It lets you create a list of (named or unnamed) makeIcon() icons,  
+and select from that list by position or name.
+
+```{r}
+# Make a list of icons. We'll index into it based on name.
+oceanIcons <- iconList(
+  ship = makeIcon("ferry-18.png", "ferry-18@2x.png", 18, 18),
+  pirate = makeIcon("danger-24.png", "danger-24@2x.png", 24, 24)
+)
+
+# Some fake data
+df <- sp::SpatialPointsDataFrame(
+  cbind(
+    (runif(20) - .5) * 10 - 90.620130,  # lng
+    (runif(20) - .5) * 3.8 + 25.638077  # lat
+  ),
+  data.frame(type = ifelse(runif(20) > 0.75, "pirate", "ship") #比較簡單的寫法
+  # data.frame(type = factor(
+  #   x = ifelse(runif(20) > 0.75, "pirate", "ship"), 
+  #   levels = c("ship", "pirate"))
+  )
+)
+
+leaflet(df) %>% addTiles() %>%
+  # Select from oceanIcons based on df$type
+  addMarkers(icon = ~oceanIcons[type], label = ~type)
+```
+
+### Awesome Icons
+
+Leaflet supports even more customizable markers using the awesome markers leaflet plugin.
+
+The addAwesomeMarkers() function is similar to addMarkers() function  
+but additionally allows you to specify custom colors for the markers  
+as well as icons from the `Font Awesome`, `Bootstrap Glyphicons`, and `Ion icons` icon libraries.
+
+Similar to the makeIcon, icons, and iconList functions described above,  
+you have makeAwesomeIcon, awesomeIcons and awesomeIconList functions,  
+which enable you to add awesome icons.
+
+```{r}
+# first 20 quakes
+df.20 <- quakes[1:20,]
+
+getColor <- function(quakes) {
+  sapply(quakes$mag, function(mag) {
+    if(mag <= 4) {"green"} 
+    else if(mag <= 5) {"orange"} 
+    else {"red"} 
+  })
+}
+
+icons <- awesomeIcons(
+  icon = 'ios-close',
+  iconColor = 'black',
+  library = 'ion',
+  markerColor = getColor(df.20)
+)
+
+leaflet(df.20) %>% addTiles() %>%
+  addAwesomeMarkers(lng = ~long, lat = ~lat, 
+                    icon = icons, label = ~as.character(mag))
+```
+
+很多參數可以調整，可以好好研究!!  
+[Font Awesome Icons](https://fontawesome.com/v4.7.0/icons/)
+
+- library: Which icon library. Default "glyphicon", other possible values are "fa" (fontawesome) or "ion" (ionicons).
+
+- markerColor: Possible values are "red", "darkred", "lightred", "orange", "beige", "green", "darkgreen", "lightgreen", "blue", "darkblue", "lightblue", "purple", "darkpurple", "pink", "cadetblue", "white", "gray", "lightgray", "black"
+
+- iconColor: The color to use for the icon itself. Use any CSS-valid color (hex, rgba, etc.) or a named web color.
+
+- spin: If TRUE, make the icon spin (only works when library = "fa")
+
+**缺點是，好像不能改icon本體，只能更改icon中的圖標。**
+
+### Marker Clusters
+
+When there are a large number of markers on a map,  
+you can cluster them using the Leaflet.markercluster plug-in.  
+
+To enable this plug-in, you can provide a list of options to the argument clusterOptions, e.g.
+
+```{r}
+leaflet(quakes) %>% addTiles() %>% 
+  addMarkers(
+    lng = ~long, lat = ~lat,
+    clusterOptions = markerClusterOptions()
+  )
+```
+
+Using the `freezeAtZoom` argument of the markerClusterOptions() function  
+you can set the clustering to freeze as a specific zoom level.  
+For example markerClusterOptions(freezeAtZoom = 5) will freeze the cluster at zoom level 5 regardless of the user’s actual zoom level.
+
+### Circle Markers
+
+Circle markers are much like regular circles (see [Lines and Shapes](https://rstudio.github.io/leaflet/shapes.html)),  
+except that their radius in onscreen pixels stays constant regardless of zoom level.
+
+You can use their default appearance:
+
+```{r}
+leaflet(df) %>% addTiles() %>% addCircleMarkers()
+```
+
+Or customize their color, radius, stroke, opacity, etc.
+
+```{r}
+# Create a palette that maps factor levels to colors
+pal <- colorFactor(c("navy", "red"), domain = c("ship", "pirate"))
+
+leaflet(df) %>% addTiles() %>%
+  addCircleMarkers(
+    radius = ~ifelse(type == "ship", 6, 10),
+    color = ~pal(type),
+    stroke = F,
+    fillOpacity = 0.5
+  )
+```
+
+---
+
+## Popups and Labels
+
+### Popups
+
+Popups are small boxes containing arbitrary HTML,  
+that point to a specific point on the map.  
+
+Use the addPopups() function to add standalone popup to the map.
+
+```{r}
+content <- paste(sep = "<br/>", 
+  "<b><a href='http://www.samurainoodle.com'>Samurai Noodle</a></b>",
+  "606 5th Ave. S",
+  "Seattle, WA 98138"
+)
+
+leaflet() %>% addTiles() %>%
+  addPopups(-122.327298, 47.597131, content,
+    options = popupOptions(closeButton = FALSE)
+  )
+
+# ---
+# tmaptools::geocode_OSM("National Center for High-performance Computing") 
+# 120.99560  24.78261 
+content <- paste(sep = "<br/>",
+  "<b><a href='https://www.nchc.org.tw/'>NCHC</a></b>",
+  "No. 7, R&D 6th Rd.",
+  "SHsinchu Science Park, Hsinchu City",
+  "Taiwan, R.O.C. 30076"
+)
+
+leaflet() %>% addTiles() %>%
+  addPopups(
+    lng = 120.99560, 
+    lat = 24.78261, 
+    popup = content,
+    options = popupOptions(closeButton = FALSE)
+  )
+
+```
+
+A common use for popups is to have them appear when markers or shapes are clicked.  
+Marker and shape functions in the Leaflet package take a popup argument,  
+where you can pass in HTML to easily attach a simple popup.
+
+```{r}
+library(htmltools)
+
+df <- read.csv(textConnection(
+"Name,Lat,Long
+Samurai Noodle,47.597131,-122.327298
+Kukai Ramen,47.6154,-122.327157
+Tsukushinbo,47.59987,-122.326726"
+))
+
+leaflet(df) %>% addTiles() %>%
+  addMarkers(lng = ~Long, lat = ~Lat, popup = ~htmlEscape(Name))
+```
+
+In the preceding example, htmltools::htmlEscape was used to  
+santize any characters in the name that might be interpreted as HTML.  
+在前面的示例中，使用htmltools::html Escape清除名稱中可能被解釋為HTML的任何字符。
+
+While it wasn’t necessary for this example  
+(as the restaurant names contained no HTML markup),  
+doing so is important in any situation where the data may come from   
+a file or database, or from the user.
+
+In addition to markers you can also add popups on shapes like lines, circles and other polygons.
+
+### Labels
+
+A label is a textual or HTML content that can attached to markers and shapes  
+to be always displayed or displayed on mouse over.  
+Unlike popups you don’t need to click a marker/polygon for the label to be shown.
+
+```{r}
+library(htmltools)
+
+df <- read.csv(textConnection(
+"Name,Lat,Long
+Samurai Noodle,47.597131,-122.327298
+Kukai Ramen,47.6154,-122.327157
+Tsukushinbo,47.59987,-122.326726"))
+
+leaflet(df) %>% addTiles() %>%
+  addMarkers(~Long, ~Lat, label = ~htmlEscape(Name), )
+```
+
+### Customizing Marker Labels
+
+You can customize marker labels using the labelOptions argument of the addMarkers function.  
+The labelOptions argument can be populated using the labelOptions() function.  
+If noHide is false (the default) then the label is displayed only when you hover the mouse over the marker; if noHide is set to true then the label is always displayed.
+
+```{r}
+# Change Text Size and text Only and also a custom CSS
+leaflet() %>% addTiles() %>% setView(-118.456554, 34.09, 13) %>%
+  addMarkers(
+    lng = -118.456554, lat = 34.105,
+    label = "Default Label",
+    labelOptions = labelOptions(noHide = T)) %>%
+  addMarkers(
+    lng = -118.456554, lat = 34.095,
+    label = "Label w/o surrounding box",
+    labelOptions = labelOptions(noHide = T, textOnly = TRUE)) %>%
+  addMarkers(
+    lng = -118.456554, lat = 34.085,
+    label = "label w/ textsize 15px",
+    labelOptions = labelOptions(noHide = T, textsize = "15px")) %>%
+  addMarkers(
+    lng = -118.456554, lat = 34.075,
+    label = "Label w/ custom CSS style",
+    labelOptions = labelOptions(noHide = T, direction = "bottom",
+        style = list(
+        "color" = "red",
+        "font-family" = "serif",
+        "font-style" = "italic",
+        "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+        "font-size" = "12px",
+        "border-color" = "rgba(0,0,0,0.5)"
+      ))
+  )
+```
+
+```{r}
+# tmaptools::geocode_OSM("National Center for High-performance Computing") 
+# 120.99560  24.78261 
+# ---
+# addMarkers - label: 沒辦法像 參數popup，直接用 css語法，而是要在 參數style 做設定。
+# markerOptions: 控制marker的各種顯示方式。
+# popupOptions - keepInView: TRUE。popup資訊不會因為，用戶平移地圖而移出地圖邊界外。
+# popupOptions - maxWidth: px。popup資訊的框框最大寬度。
+# popupOptions - minWidth: px。popup資訊的框框最小寬度。
+# popupOptions - maxHeight: px。popup資訊的框框最大高度。
+# popupOptions - autoPan: 如果希望以平移動畫打開的popup，設置為TRUE。預設為TRUE
+# popupOptions - closeButton: 關閉popup的按鈕是否顯示。
+# popupOptions - closeOnClick: 是否點擊地圖其他地方，就可關閉popup。
+# labelOptions - noHide、permanent: label是否要常駐顯示。
+# labelOptions - textOnly: label框框是否要隱藏。
+# labelOptions - textsize: px。label字體大小。
+# labelOptions - direction: Direction where to open the tooltip. Possible values are: right, left, top, bottom, center, auto. auto will dynamically switch between right and left according to the tooltip position on the map.
+# labelOptions - opacity: 0~1。label字透明度。
+# labelOptions - sticky: label是否跟著滑鼠移動。
+
+content <- paste(sep = "<br/>",
+  "<b><a href='https://www.nchc.org.tw/'>NCHC</a></b>",
+  "No. 7, R&D 6th Rd.",
+  "SHsinchu Science Park, Hsinchu City",
+  "Taiwan, R.O.C. 30076"
+)
+
+leaflet(options = leafletOptions(minZoom = 12)) %>% 
+  addTiles() %>% 
+  setView(lng = 120.99560, lat = 24.78261, zoom = 16) %>%
+  addMarkers(
+    lng = 120.99560, lat = 24.78261, 
+    icon = leaflet::icons(iconUrl = "./72px.png", iconRetinaUrl = "./24px.png",
+                          iconAnchorX = 10, iconAnchorY = 30),
+    options = markerOptions(draggable = T, interactive = T),
+    popup = content, 
+    popupOptions = popupOptions(keepInView = T),
+    label = "NCHC", 
+    labelOptions = labelOptions(
+      noHide = T,  
+      textOnly = TRUE,
+      textsize = "30px",
+      direction = "bottom",
+      style = list(
+        "color" = "red",
+        "font-family" = "Consolas, Courier New, monospace, Microsoft JhengHei",
+        "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+        "font-size" = "20px",
+        "border-color" = "rgba(0,0,0,0.5)"
+      )
+    )
+  )
+```
+
+### Labels without markers
+
+You can create labels without the accompanying markers using the addLabelOnlyMarkers() function.
+
+```{r}
+leaflet(options = leafletOptions(minZoom = 12)) %>% 
+  addTiles() %>% 
+  setView(lng = 120.99560, lat = 24.78261, zoom = 16) %>%
+  addLabelOnlyMarkers(
+    lng = 120.99560, lat = 24.78261, 
+    label = "NCHC", 
+    labelOptions = labelOptions(
+      noHide = T,  
+      textOnly = TRUE,
+      textsize = "30px",
+      direction = "bottom",
+      style = list(
+        "color" = "red",
+        "font-family" = "Consolas, Courier New, monospace, Microsoft JhengHei",
+        "box-shadow" = "3px 3px rgba(0,0,0,0.25)",
+        "font-size" = "20px",
+        "border-color" = "rgba(0,0,0,0.5)"
+      )
+    )
+  )
+```
+
+---
+
+## Lines and Shapes
+
+Leaflet makes it easy to take spatial lines and shapes from R and add them to maps.
+
+### Polygons and Polylines
+
+Line and polygon data can come from a variety of sources: 請看文檔。
+
+```{r}
+library(rgdal)
+
+# From https://www.census.gov/geo/maps-data/data/cbf/cbf_state.html
+# 上面的資料源失效了，請到
+# Census.gov > Browse By Topic > Geography > Geographies > 
+# Geography Mapping Files > More:2013 > Cartographic Boundary Files - Shapefile(CB) > 
+# 2013 > States > cb_2013_us_state_20m.zip
+states <- readOGR("../data/census_gov/cb_2013_us_state_20m.shp",
+  layer = "cb_2013_us_state_20m", GDAL1_integer64_policy = TRUE)
+```
+
+```{r}
+# 代碼的部分請看
+# https://www2.census.gov/geo/pdfs/maps-data/data/tiger/tgrshp2013/
+# TGRSHP2013_TechDoc_A.pdf
+# ALAND: 單位推論是平方公尺。
+
+# ---
+# states %>% names()
+# glimpse(states)
+# states@data %>% head
+data.table(NAME = states$NAME, 
+           STUSPS = states$STUSPS, 
+           ALAND = states$ALAND)
+```
+
+選擇像要的州states
+
+```{r}
+neStates <- subset(states, states$STUSPS %in% c(
+  "CT","ME","MA","NH","RI","VT","NY","NJ","PA"
+))
+```
+
+顏色配置
+
+```{r}
+# 參數palette: 可有四種來源名稱填入，
+# 然後這個函數的使用蠻奇特的，學一下~
+RColorBrewer::brewer.pal.info
+colorQuantile(palette = "YlOrRd", domain = neStates$ALAND)(neStates$ALAND)
+```
+
+地圖呈現
+
+```{r}
+# ---
+# 有一些不錯的參數可以調整
+# addPolygons - dashArray: 線條樣式參數。
+# 還有 
+# noClip、popup、popupOptions、label、labelOptions
+# options = pathOptions、highlightOptions
+
+leaflet(neStates) %>%
+  addPolygons(
+    color = "#444444", #stroke color
+    weight = 1, #區塊邊界的粗細
+    opacity = 1.0, #區塊邊界的透明度
+    smoothFactor = 0.5, #地圖區塊的邊界簡化程度。數字越大，地圖簡化越多，但是性能也越好。會隨著縮放做改變。
+    fillColor = ~colorQuantile("YlOrRd", ALAND)(ALAND),
+    fillOpacity = 0.5, #區塊顏色的透明度
+    popup = (neStates$ALAND/1000000) %>% round %>% 
+      paste(as.character(neStates$NAME), "<br>", ., "km^2"),
+    label = as.character(neStates$STUSPS),
+    highlightOptions = highlightOptions(
+      color = "white", 
+      weight = 2,
+      bringToFront = TRUE))
+```
+
+### Highlighting shapes
+
+The above example uses the highlightOptions parameter   
+to emphasize the currently moused-over polygon.   
+(The bringToFront = TRUE argument is necessary to prevent the thicker,  
+white border of the active polygon from being hidden behind the borders of other polygons  
+that happen to be higher in the z-order.)  
+
+You can use highlightOptions with all of the shape layers described on this page.
+
+### Simplifying complex polygons/polylines
+
+Very detailed (i.e. large) shape data can present a problem for Leafet,  
+since it is all eventually passed into the browser and rendered as SVG,  
+which is very expressive and convenient but has scalability limits.  
+
+In these cases, consider using rmapshaper::ms_simplify, which does topology-preserving simplification conveniently from R.
+
+```{r}
+# remotes::install_github("hrbrmstr/albersusa")
+library(albersusa)
+
+# ---
+fullsize <- usa_sf()
+object.size(fullsize)
+
+# ---
+simplified <- rmapshaper::ms_simplify(fullsize)
+object.size(simplified)
+```
+
+### Circles
+
+Circles are added using addCircles().  
+Circles are similar to circle markers; the only difference is that circles have their radii specified in meters, while circle markers are specified in pixels.  
+Circles 和 circle markers 的唯一不同在於一個半徑是用 meters，另一個是pixels。
+
+As a result, circles are scaled with the map as the user zooms in and out,  
+while circle markers remain a constant size on the screen regardless of zoom level.
+結果，當用戶放大和縮小時，圓圈將隨地圖縮放。  
+圓形標記在屏幕上的大小不變，無論縮放級別如何。
+
+When plotting circles, only the circle centers (and radii) are required,  
+so the set of valid data sources is different than for polygons  
+and the same as for markers.  
+See the introduction to Markers for specifics.
+
+```{r}
+cities <- read.csv(textConnection("
+City,Lat,Long,Pop
+Boston,42.3601,-71.0589,645966
+Hartford,41.7627,-72.6743,125017
+New York City,40.7127,-74.0059,8406000
+Philadelphia,39.9500,-75.1667,1553000
+Pittsburgh,40.4397,-79.9764,305841
+Providence,41.8236,-71.4222,177994
+"))
+cities
+```
+
+```{r}
+leaflet(cities) %>% addTiles() %>%
+  addCircles(
+    lng = ~Long, lat = ~Lat, 
+    weight = 1, #圓圈的邊框
+    radius = ~sqrt(Pop) * 30, popup = ~City
+  )
+```
+
+### Rectangles
+
+Rectangles are added using the addRectangles() function.  
+It takes lng1, lng2, lat1, and lat2 vector arguments  
+that define the corners of the rectangles.  
+
+These arguments are always required;  
+**the rectangle geometry cannot be inferred from the data object.**
+
+```{r}
+leaflet() %>% addTiles() %>%
+  addRectangles(
+    lng1=-118.456554, lat1=34.078039,
+    lng2=-118.436383, lat2=34.062717,
+    fillColor = "transparent" #設置成透明的小技巧。
+  )
+```
+
+---
+
+## Working with GeoJSON & TopoJSON
+
+For working with GeoJSON/TopoJSON data you have two options:  
+either read it into `sp objects`;  
+or use the `addGeoJSON()` and `addTopoJSON()` functions.
+
+### Reading as sp
+
+he first approach is to use either `rgdal` or `geojsonio` (packages) to read GeoJSON/TopoJSON as sp objects.  
+Then, you can use the full functionality of `polygons`, `markers`, `colors`, `legends`, etc.
+
+第一種方法是使用`rgdal`或`geojsonio`套件將GeoJSON / TopoJSON讀取為sp對象。  
+然後，您可以使用多邊形，標記，顏色，圖例等的全部功能。
+
+```{r}
+# From http://eric.clst.org/Stuff/USGeoJSON and
+# https://en.wikipedia.org/wiki/List_of_United_States_counties_and_county_equivalents
+# 第一個連結其實幫忙整理了很多資料，要慢慢挖掘使用
+# 第一個連結 > 下載 US Counties > GeoJson
+
+# ---
+# tutorial 方法失效，且資料找不到。
+# nycounties <- rgdal::readOGR("json/nycounties.geojson")
+
+# Or use the geojsonio equivalent:
+# nycounties <- geojsonio::geojson_read("json/nycounties.geojson", what = "sp")
+```
+
+[How to download NY state all County data in R for leaflet map - Stack Overflow](https://stackoverflow.com/questions/43446802/how-to-download-ny-state-all-county-data-in-r-for-leaflet-map)
+
+[R: Selecting certain from a JSON file - Stack Overflow](https://stackoverflow.com/questions/46355170/r-selecting-certain-from-a-json-file)
+
+[leaflet/docs/json at master · rstudio/leaflet](https://github.com/rstudio/leaflet/tree/master/docs/json)
+
+```{r eval = F}
+# 資料有點大，所以我後來有把 new york 的資料另外拉出。
+
+# ---
+# 去stackoverflow上找答案
+xy <- geojsonio::geojson_read("../data/gz_2010_us_050_00_500k.json", what = "sp")
+# xy %>% str
+
+names(xy)
+# [1] "GEO_ID"     "STATE"      "COUNTY"     "NAME"       "LSAD"       "CENSUSAREA"
+# xy$STATE %>% unique() #52州
+# xy$COUNTY %>% unique() #325個縣
+
+# from Wikipedia list of counties, find Genesse county(傑納西縣, aka密西根州), 
+# which should be located in NY state
+xy[grepl("36037", xy$GEO_ID), ]$STATE
+# [1] 36
+
+# NY state should be number 36
+nyc <- xy[xy$STATE == 36, ]
+leaflet(nyc) %>%
+  addTiles() %>%
+  addPolygons()
+
+# ---
+# geojsonio::geojson_write(input = nyc, file = "../data/nycounties") #預設會儲存 .geojson
+```
+
+
+```{r}
+# 資料比較小，讀取比較快!!
+nycounties <- geojsonio::geojson_read("../data/nycounties.geojson", what = "sp")
+# nyc <- sf::read_sf("../data/nycounties.geojson") #也是OK
+
+leaflet(data = nycounties) %>%
+  addTiles() %>%
+  addPolygons()
+```
+
+```{r}
+nycounties <- geojsonio::geojson_read("../data/nycounties.geojson", what = "sp")
+pal <- colorNumeric("viridis", NULL)
+
+leaflet(nycounties) %>%
+  addTiles() %>%
+  addPolygons(stroke = FALSE, smoothFactor = 0.3, fillOpacity = 1,
+    fillColor = ~pal(log10(pop)),
+    label = ~paste0(county, ": ", formatC(pop, big.mark = ","))) %>%
+  addLegend(pal = pal, values = ~log10(pop), opacity = 1.0,
+    labFormat = labelFormat(transform = function(x) round(10^x)))
+```
+
+
+```{r}
+# ---
+# 另一個資料源，所以和tutorial有點出入
+nycounties <- geojsonio::geojson_read("../data/nycounties01.geojson", what = "sp")
+
+# - smoothFactor: 
+# how much to simplify the polyline on each zoom level (more means better performance and less accurate representation)。
+# 每個縮放級別可簡化多段線多少（更多意味著更好的性能和更不准確的表示）
+pal <- colorNumeric("viridis", NULL)
+
+# leaflet(data = nycounties) %>%
+leaflet(nycounties) %>%
+  addTiles() %>%
+  addPolygons(
+    stroke = TRUE, #地圖區塊邊界是否出現
+    color = "#444444", #stroke color
+    weight = 1, #區塊邊界的粗細
+    opacity = 1.0, #區塊邊界的透明度
+    highlightOptions = highlightOptions(
+      color = "white", 
+      weight = 1,
+      opacity = 1, 
+      bringToFront = TRUE),
+    smoothFactor = 0.3, #地圖區塊的邊界簡化程度。數字越大，地圖簡化越多，但是性能也越好。會隨著縮放做改變。
+    fillOpacity = 1, #地圖區塊填色的透命度。
+    fillColor = ~pal(CENSUSAREA),
+    label = ~paste0(NAME, ": ", formatC(CENSUSAREA, big.mark = ","))) %>%
+  addLegend(pal = pal, 
+            values = ~CENSUSAREA, #vales也可以直接在這裡轉換。
+            opacity = 1.0, #legend色調的透明度。
+            labFormat = labelFormat(transform = function(x) x)) #把vales放進這裡做轉換。
+```
+
+This approach is preferred over using addGeoJSON/addTopoJSON,  
+as it makes it easy to use feature properties in determining map colors, labels, etc., or to modify or add new properties.  
+與使用addGeoJSON/addTopoJSON相比，此方法更為可取，  
+因為它可以輕鬆使用要素屬性來確定地圖顏色，標籤等，或修改或添加新屬性。  
+
+The main downside to this approach is that it only supports feature collections where all features are of the same type,  
+whereas in GeoJSON/TopoJSON it’s possible-though uncommon-to have a single feature collection that contains, say, both markers and polygons.
+這種方法的主要缺點是，它僅支持所有要素都屬於同一類型的要素集，  
+而在GeoJSON/TopoJSON中，有可能（儘管不常見）有一個包含例如標記和多邊形的要素集。
+
+### Working with raw GeoJSON/TopoJSON
+
+資料來源:  
+
+[topojson/us-atlas: Pre-built TopoJSON from the U.S. Census Bureau.](https://github.com/topojson/us-atlas#counties)
+
+[vega/us-10m.json at master · vega/vega](https://github.com/vega/vega/blob/master/docs/data/us-10m.json)
+
+[leaflet/docs/json at master · rstudio/leaflet](https://github.com/rstudio/leaflet/tree/master/docs/json)
+
+```{r}
+topoData <- readLines("../data/states-10m.json") %>% paste(collapse = "\n")
+
+leaflet() %>% setView(lng = -98.583, lat = 39.833, zoom = 3) %>%
+  addTiles() %>%
+  addTopoJSON(topoData, weight = 1, color = "#444444", fill = FALSE)
+
+# ---
+topoData <- readLines("../data/us-10m.json") %>% paste(collapse = "\n")
+
+leaflet() %>% setView(lng = -98.583, lat = 39.833, zoom = 3) %>%
+  addTiles() %>%
+  addTopoJSON(topoData, weight = 1, color = "#444444", fill = FALSE)
+```
+
+### Styling raw GeoJSON/TopoJSON
+
+資料來源: 
+
+[geo-countries/data at master · datasets/geo-countries](https://github.com/datasets/geo-countries/tree/master/data)
+
+[leaflet/docs/json at master · rstudio/leaflet](https://github.com/rstudio/leaflet/tree/master/docs/json)
+
+```{r}
+library(jsonlite)
+
+# From http://data.okfn.org/data/datasets/geo-boundaries-world-110m
+geojson <- readLines("../data/countries.geojson", warn = FALSE) %>%
+  paste(collapse = "\n") %>%
+  fromJSON(simplifyVector = FALSE)
+
+# Default styles for all features
+geojson$style = list(
+  weight = 1,
+  color = "#555555",
+  opacity = 1,
+  fillOpacity = 0.8
+)
+
+# Gather GDP estimate from all countries
+gdp_md_est <- sapply(geojson$features, function(feat) {
+  feat$properties$gdp_md_est
+})
+# Gather population estimate from all countries
+pop_est <- sapply(geojson$features, function(feat) {
+  max(1, feat$properties$pop_est)
+})
+
+# Color by per-capita GDP using quantiles
+pal <- colorQuantile("Greens", gdp_md_est/pop_est)
+# Add a properties$style list to each feature
+geojson$features <- lapply(geojson$features, function(feat) {
+  feat$properties$style <- list(
+    fillColor = pal(
+      feat$properties$gdp_md_est / max(1, feat$properties$pop_est)
+    )
+  )
+  feat
+})
+
+# Add the now-styled GeoJSON object to the map
+leaflet() %>% addGeoJSON(geojson)
+```
+
+
+
+
+---
+
+# END
+
+
+
+
+
+

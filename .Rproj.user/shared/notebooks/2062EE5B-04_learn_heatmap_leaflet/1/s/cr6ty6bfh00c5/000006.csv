@@ -1,0 +1,5 @@
+"0","topoData <- readLines(""../data/states-10m.json"") %>% paste(collapse = ""\n"")"
+"0",""
+"0","leaflet() %>% setView(lng = -98.583, lat = 39.833, zoom = 3) %>%"
+"0","  addTiles() %>%"
+"0","  addTopoJSON(topoData, weight = 1, color = ""#444444"", fill = FALSE)"

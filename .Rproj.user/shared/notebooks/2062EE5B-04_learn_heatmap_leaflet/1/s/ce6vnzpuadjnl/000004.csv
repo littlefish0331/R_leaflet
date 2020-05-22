@@ -1,0 +1,5 @@
+"0",""
+"0","# ---"
+"0","# tmaptools::geocode_OSM(""taipei"") #121.56368  25.03752 "
+"0","m <- leaflet() %>% setView(lng = 121.56368, lat = 25.03752, zoom = 12)"
+"0","m %>% addTiles()"

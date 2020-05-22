@@ -1,0 +1,6 @@
+"0","leaflet(cities) %>% addTiles() %>%"
+"0","  addCircles("
+"0","    lng = ~Long, lat = ~Lat, "
+"0","    weight = 1, #圓圈的邊框"
+"0","    radius = ~sqrt(Pop) * 30, popup = ~City"
+"0","  )"

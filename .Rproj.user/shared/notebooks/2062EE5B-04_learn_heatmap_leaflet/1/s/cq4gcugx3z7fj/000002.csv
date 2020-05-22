@@ -1,0 +1,8 @@
+"0","# transparent(透明)"
+"0","leaflet() %>% addTiles() %>% setView(-93.65, 42.0285, zoom = 4) %>%"
+"0","  addWMSTiles("
+"0","    baseUrl = ""http://mesonet.agron.iastate.edu/cgi-bin/wms/nexrad/n0r.cgi"","
+"0","    layers = ""nexrad-n0r-900913"","
+"0","    options = WMSTileOptions(format = ""image/png"", transparent = TRUE),"
+"0","    attribution = ""Weather data © 2012 IEM Nexrad"""
+"0","  )"
