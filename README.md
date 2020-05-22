@@ -7,7 +7,8 @@ repository的所有函式(code/)都確保可以執行。
 所需資料也都在 data/。
 
 - R版本: MRO 3.5.3
-- tmap: 2.0.2
+- leaflet: 2.0.2
+- leaflet.extra: 1.0.0
 
 ## 官方 tutorial, Vignettes
 
