@@ -1,6 +1,7 @@
 # README
 
-最後更新時間: 2020-05-22。
+最後更新時間: 2020-06-13  
+移到 Github Repository: R_package_learning_note
 
 學習 R package: leaflet, leaflet.extra 的操作。  
 repository的所有函式(code/)都確保可以執行。  
